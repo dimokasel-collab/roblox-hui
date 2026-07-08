@@ -1,0 +1,304 @@
+local P = game:GetService("Players")
+local U = game:GetService("UserInputService")
+local R = game:GetService("RunService")
+local pl = P.LocalPlayer
+local ch = pl.Character or pl.CharacterAdded:Wait()
+local root = ch:WaitForChild("HumanoidRootPart")
+local hum = ch:WaitForChild("Humanoid")
+local cam = workspace.CurrentCamera
+
+_G.fly = false
+_G.noclip = false
+_G.walkfling = false
+_G.esp = false
+_G.bright = false
+_G.flySpeed = 50
+_G.walkSpeed = 16
+
+_G.keyMenu = "Q"
+_G.keyFly = "F"
+_G.keyNoclip = "N"
+_G.keyFling = "G"
+_G.keyEsp = "V"
+_G.keyBright = "B"
+
+local bv, bg, ncConn, wfConn
+
+pl.CharacterAdded:Connect(function(n)
+	ch, root, hum = n, n:WaitForChild("HumanoidRootPart"), n:WaitForChild("Humanoid")
+	hum.WalkSpeed = _G.walkSpeed
+	if _G.walkfling then _G.walkfling = false if wfConn then wfConn:Disconnect() end end
+end)
+
+R.Heartbeat:Connect(function()
+	if hum and hum.Parent and not _G.fly then hum.WalkSpeed = _G.walkSpeed end
+end)
+
+function toggleFly()
+	_G.fly = not _G.fly
+	hum.PlatformStand = _G.fly
+	if not _G.fly then 
+		if bv then bv:Destroy() end if bg then bg:Destroy() end 
+		hum.WalkSpeed = _G.walkSpeed
+		if _G.updateVisuals then _G.updateVisuals() end
+		return 
+	end
+	bv, bg = Instance.new("BodyVelocity", root), Instance.new("BodyGyro", root)
+	bv.MaxForce, bg.MaxTorque, bg.P = Vector3.new(1e9, 1e9, 1e9), Vector3.new(1e9, 1e9, 1e9), 9000
+	task.spawn(function()
+		while _G.fly do R.RenderStepped:Wait()
+			local dir = Vector3.zero
+			if U:IsKeyDown(Enum.KeyCode.W) then dir += cam.CFrame.LookVector end
+			if U:IsKeyDown(Enum.KeyCode.S) then dir -= cam.CFrame.LookVector end
+			if U:IsKeyDown(Enum.KeyCode.A) then dir -= cam.CFrame.RightVector end
+			if U:IsKeyDown(Enum.KeyCode.D) then dir += cam.CFrame.RightVector end
+			if U:IsKeyDown(Enum.KeyCode.Space) then dir += Vector3.new(0,1,0) end
+			if U:IsKeyDown(Enum.KeyCode.LeftShift) then dir -= Vector3.new(0,1,0) end
+			bv.Velocity = dir.Magnitude > 0 and dir.Unit * _G.flySpeed or Vector3.zero
+			bg.CFrame = cam.CFrame
+		end
+	end)
+	if _G.updateVisuals then _G.updateVisuals() end
+end
+local P = game:GetService("Players")
+local R = game:GetService("RunService")
+local pl = P.LocalPlayer
+
+function toggleNoclip()
+	_G.noclip = not _G.noclip
+	if not _G.noclip then if ncConn then ncConn:Disconnect() end if _G.updateVisuals then _G.updateVisuals() end return end
+	ncConn = R.Stepped:Connect(function()
+		local myChar = pl.Character
+		if myChar then for _, p in ipairs(myChar:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide = false end end end
+	end)
+	if _G.updateVisuals then _G.updateVisuals() end
+end
+
+-- ИСПРАВЛЕНО: Жёсткое наведение флинга без потери и накладок службы игроков [IY]
+function toggleWalkFling()
+	_G.walkfling = not _G.walkfling
+	if not _G.walkfling then if wfConn then wfConn:Disconnect() end if _G.updateVisuals then _G.updateVisuals() end return end
+	wfConn = R.Heartbeat:Connect(function()
+		local myChar = pl.Character
+		local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+		local myHum = myChar and myChar:FindFirstChildOfClass("Humanoid")
+		if not myRoot or not myHum or myHum.Health <= 0 then return end
+		pcall(function()
+			local target, minDist = nil, 8
+			for _, p in ipairs(P:GetPlayers()) do
+				if p ~= pl and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChildOfClass("Humanoid") and p.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
+					local dist = (myRoot.Position - p.Character.HumanoidRootPart.Position).Magnitude
+					if dist < minDist then minDist = dist target = p.Character.HumanoidRootPart end
+				end
+			end
+			if target then
+				local curCF = myRoot.CFrame
+				myRoot.AssemblyLinearVelocity = myRoot.CFrame.LookVector * 10000 + Vector3.new(0, 10000, 0)
+				myRoot.CFrame = target.CFrame * CFrame.new(0, 0, math.sin(tick() * 60) * 1.5)
+				R.Heartbeat:Wait()
+				myRoot.CFrame = curCF
+				myRoot.Anchored = true
+				myRoot.AssemblyLinearVelocity, myRoot.AssemblyAngularVelocity, myRoot.Velocity, myRoot.RotVelocity = Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero
+				R.Heartbeat:Wait()
+				myRoot.Anchored = false
+			else
+				if not _G.fly then myRoot.Velocity = Vector3.new(myRoot.Velocity.X, 0, myRoot.Velocity.Z) end
+			end
+		end)
+	end)
+	if _G.updateVisuals then _G.updateVisuals() end
+end
+local P = game:GetService("Players")
+local R = game:GetService("RunService")
+local pl = P.LocalPlayer
+
+function giveTpTool()
+	pcall(function()
+		local tool = Instance.new("Tool") tool.Name = "TP Tool" tool.RequiresHandle = false
+		tool.Activated:Connect(function()
+			local mouse = pl:GetMouse() local root = pl.Character and pl.Character:FindFirstChild("HumanoidRootPart")
+			if mouse.Target and root then root.CFrame = CFrame.new(mouse.Hit.X, mouse.Hit.Y + 3, mouse.Hit.Z) end
+		end)
+		tool.Parent = pl:WaitForChild("Backpack")
+	end)
+end
+
+function giveLeverR6()
+	pcall(function()
+		local tool = Instance.new("Tool") tool.Name = "Lever Tool R6" tool.RequiresHandle = false local steppedConn = nil
+		tool.Equipped:Connect(function() steppedConn = R.Stepped:Connect(function() local myChar = pl.Character if not myChar then return end local r6Shoulder = myChar:FindFirstChild("Torso") and myChar.Torso:FindFirstChild("Right Shoulder") if r6Shoulder then r6Shoulder.C0 = CFrame.new(1, 0.5, 0) * CFrame.Angles(0, math.rad(90), math.rad(110)) r6Shoulder.CurrentAngle = math.rad(110) end end) end)
+		tool.Unequipped:Connect(function() if steppedConn then steppedConn:Disconnect() steppedConn = nil end local myChar = pl.Character local r6Shoulder = myChar and myChar:FindFirstChild("Torso") and myChar.Torso:FindFirstChild("Right Shoulder") if r6Shoulder then r6Shoulder.C0 = CFrame.new(1, 0.5, 0) * CFrame.Angles(0, math.rad(90), 0) end end)
+		tool.Parent = pl:WaitForChild("Backpack")
+	end)
+end
+
+function giveLeverR15()
+	pcall(function()
+		local tool = Instance.new("Tool") tool.Name = "Lever Tool R15" tool.RequiresHandle = false local steppedConn = nil
+		tool.Equipped:Connect(function() steppedConn = R.Stepped:Connect(function() local myChar = pl.Character if not myChar then return end local r15Shoulder = myChar:FindFirstChild("RightUpperArm") and myChar.RightUpperArm:FindFirstChild("RightShoulder") if r15Shoulder then r15Shoulder.Transform = CFrame.Angles(math.rad(110), 0, 0) end end) end)
+		tool.Unequipped:Connect(function() if steppedConn then steppedConn:Disconnect() steppedConn = nil end local myChar = pl.Character local r15Shoulder = myChar and myChar:FindFirstChild("RightUpperArm") and myChar.RightUpperArm:FindFirstChild("RightShoulder") if r15Shoulder then r15Shoulder.Transform = CFrame.identity end end)
+		tool.Parent = pl:WaitForChild("Backpack")
+	end)
+end
+local P = game:GetService("Players")
+local L = game:GetService("Lighting")
+local pl = P.LocalPlayer
+
+local function createEsp(player)
+	if player == pl then return end
+	local function applyEsp(character)
+		if not character then return end
+		local hl = character:FindFirstChild("LunaEspBox") or Instance.new("Highlight", character) hl.Name = "LunaEspBox" hl.FillColor, hl.FillTransparency, hl.OutlineColor, hl.OutlineTransparency, hl.Adornee, hl.Enabled = Color3.new(1,1,1), 0.85, Color3.new(1,1,1), 0, character, _G.esp
+		local head = character:WaitForChild("Head", 5)
+		if head then
+			local bb = character:FindFirstChild("LunaEspName") or Instance.new("BillboardGui", character) bb.Name = "LunaEspName" bb.Size, bb.AlwaysOnTop, bb.StudsOffset, bb.Adornee, bb.Enabled = UDim2.new(0, 100, 0, 20), true, Vector3.new(0, 2.5, 0), head, _G.esp
+			local textLabel = bb:FindFirstChild("TextLabel") or Instance.new("TextLabel", bb) textLabel.Size, textLabel.BackgroundTransparency, textLabel.Text, textLabel.TextColor3, textLabel.Font, textLabel.TextSize, textLabel.TextStrokeTransparency = UDim2.new(1, 0, 1, 0), 1, player.Name, Color3.new(1,1,1), Enum.Font.SourceSansBold, 12, 0.5
+		end
+	end
+	player.CharacterAdded:Connect(applyEsp) if player.Character then applyEsp(player.Character) end
+end
+function toggleEsp()
+	_G.esp = not _G.esp for _, player in ipairs(P:GetPlayers()) do if player.Character then local hl = player.Character:FindFirstChild("LunaEspBox") local bb = player.Character:FindFirstChild("LunaEspName") if hl then hl.Enabled = _G.esp end if bb then bb.Enabled = _G.esp end end end
+	if _G.updateVisuals then _G.updateVisuals() end
+end
+for _, p in ipairs(P:GetPlayers()) do createEsp(p) end P.PlayerAdded:Connect(createEsp)
+
+task.spawn(function()
+	while true do task.wait(0.2)
+		if _G.bright then
+			pcall(function()
+				L.Ambient = Color3.fromRGB(255, 255, 255)
+				L.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
+				L.Brightness = 2
+				L.ClockTime = 14
+				L.FogEnd = 9e9
+				L.FogStart = 9e9
+			end)
+		end
+	end
+end)
+function toggleBright() _G.bright = not _G.bright if _G.updateVisuals then _G.updateVisuals() end end
+local P = game:GetService("Players")
+local U = game:GetService("UserInputService")
+local pl = P.LocalPlayer
+
+function refreshPlayerList(scrollingFrame)
+	for _, v in ipairs(scrollingFrame:GetChildren()) do if v:IsA("Frame") then v:Destroy() end end local count = 0
+	for _, p in ipairs(P:GetPlayers()) do
+		if p ~= pl then
+			local pFrame = Instance.new("Frame", scrollingFrame) pFrame.Size, pFrame.Position, pFrame.BackgroundColor3 = UDim2.new(0.95, 0, 0, 24), UDim2.new(0.025, 0, 0, count * 28), Color3.fromRGB(25, 30, 45)
+			Instance.new("UICorner", pFrame).CornerRadius = UDim.new(0, 4) Instance.new("UIStroke", pFrame).Color = Color3.fromRGB(120, 25, 45)
+			local pName = Instance.new("TextLabel", pFrame) pName.Size, pName.Position, pName.Text, pName.TextColor3, pName.Font, pName.TextSize, pName.TextXAlignment, pName.BackgroundTransparency = UDim2.new(0.7, 0, 1, 0), UDim2.new(0.05, 0, 0, 0), p.Name, Color3.fromRGB(215, 215, 225), Enum.Font.SourceSansBold, 11, Enum.TextXAlignment.Left, 1
+			local tpBtn = Instance.new("TextButton", pFrame) tpBtn.Size, tpBtn.Position, tpBtn.BackgroundColor3, tpBtn.Text, tpBtn.TextColor3, tpBtn.Font, tpBtn.TextSize = UDim2.new(0.2, 0, 0.8, 0), UDim2.new(0.75, 0, 0.1, 0), Color3.fromRGB(215, 45, 75), "TP", Color3.new(1,1,1), Enum.Font.SourceSansBold, 11
+			Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0, 4)
+			tpBtn.MouseButton1Click:Connect(function() local root = pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") if p.Character and p.Character:FindFirstChild("HumanoidRootPart") and root then root.CFrame = p.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 2) end end)
+			count = count + 1
+		end
+	end
+	scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, count * 28)
+end
+
+U.InputBegan:Connect(function(input, processed)
+	if processed or not input.KeyCode then return end local keyName = input.KeyCode.Name
+	if keyName == _G.keyMenu:upper() then if _G.menuFrame then _G.menuFrame.Visible = not _G.menuFrame.Visible end
+	elseif keyName == _G.keyFly:upper() then toggleFly()
+	elseif keyName == _G.keyNoclip:upper() then toggleNoclip()
+	elseif keyName == _G.keyFling:upper() then toggleWalkFling()
+	elseif keyName == _G.keyEsp:upper() then toggleEsp()
+	elseif keyName == _G.keyBright:upper() then toggleBright()
+	end
+end)
+local P = game:GetService("Players")
+local pl = P.LocalPlayer
+
+local sg = Instance.new("ScreenGui", pl:WaitForChild("PlayerGui")) sg.ResetOnSpawn = false
+local frame = Instance.new("Frame", sg) frame.Size, frame.Position, frame.BackgroundColor3, frame.Active, frame.Draggable, frame.Visible = UDim2.new(0, 150, 0, 365), UDim2.new(0.05, 0, 0.3, 0), Color3.fromRGB(15, 20, 35), true, true, false
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10) _G.menuFrame = frame
+Instance.new("UIStroke", frame).Color = Color3.fromRGB(215, 45, 75)
+local lbl = Instance.new("TextLabel", frame) lbl.Size, lbl.Text, lbl.BackgroundColor3, lbl.BackgroundTransparency = UDim2.new(1, 0, 0, 25), "", Color3.fromRGB(235, 170, 45), 0.1
+Instance.new("UICorner", lbl).CornerRadius = UDim.new(0, 10)
+
+local listFrame = Instance.new("Frame", sg) listFrame.Size, listFrame.Position, listFrame.BackgroundColor3, listFrame.Active, listFrame.Draggable, listFrame.Visible = UDim2.new(0, 170, 0, 220), UDim2.new(0.2, 0, 0.3, 0), Color3.fromRGB(15, 20, 35), true, true, false
+Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0, 10) _G.listFrameGlobal = listFrame
+Instance.new("UIStroke", listFrame).Color = Color3.fromRGB(215, 45, 75)
+local listLbl = Instance.new("TextLabel", listFrame) listLbl.Size, listLbl.Text, listLbl.TextColor3, listLbl.Font, listLbl.TextSize, listLbl.BackgroundColor3 = UDim2.new(1, 0, 0, 25), "SERVER PLAYERS", Color3.fromRGB(245, 245, 255), Enum.Font.SourceSansBold, 12, Color3.fromRGB(235, 170, 45)
+Instance.new("UICorner", listLbl).CornerRadius = UDim.new(0, 10)
+_G.scFrame = Instance.new("ScrollingFrame", listFrame) _G.scFrame.Size, _G.scFrame.Position, _G.scFrame.BackgroundTransparency, _G.scFrame.BorderSizePixel, _G.scFrame.ScrollBarThickness = UDim2.new(1, 0, 0.85, 0), UDim2.new(0, 0, 0.13, 0), 1, 0, 4
+
+local toggleButton = Instance.new("TextButton", sg) toggleButton.Size, toggleButton.Position, toggleButton.BackgroundColor3, toggleButton.BorderSizePixel, toggleButton.BackgroundTransparency, toggleButton.Text, toggleButton.Active, toggleButton.Draggable = UDim2.new(0, 50, 0, 50), UDim2.new(0.05, 0, 0.22, 0), Color3.fromRGB(15, 20, 35), 0, 0.2, "", true, true
+Instance.new("UICorner", toggleButton).CornerRadius = UDim.new(1, 0) Instance.new("UIStroke", toggleButton).Color = Color3.fromRGB(215, 45, 75)
+local lamp = Instance.new("Frame", toggleButton) lamp.Size, lamp.Position, lamp.BackgroundColor3, lamp.BorderSizePixel = UDim2.new(0, 16, 0, 10), UDim2.new(0.5, -8, 0, -9), Color3.fromRGB(255, 200, 50), 0
+Instance.new("UICorner", lamp).CornerRadius = UDim.new(1, 0) Instance.new("UIStroke", lamp).Color = Color3.fromRGB(255, 100, 50)
+local earL = Instance.new("TextLabel", toggleButton) earL.Size, earL.Position, earL.BackgroundTransparency, earL.Text, earL.Font, earL.TextSize, earL.Rotation, earL.TextColor3 = UDim2.new(0, 20, 0, 20), UDim2.new(0, -6, 0, -15), 1, "▲", Enum.Font.SourceSansBold, 24, -20, Color3.fromRGB(215, 45, 75)
+local earR = Instance.new("TextLabel", toggleButton) earR.Size, earR.Position, earR.BackgroundTransparency, earR.Text, earR.Font, earR.TextSize, earR.Rotation, earR.TextColor3 = UDim2.new(0, 20, 0, 20), UDim2.new(1, -14, 0, -15), 1, "▲", Enum.Font.SourceSansBold, 24, 20, Color3.fromRGB(215, 45, 75)
+local eyeL = Instance.new("Frame", toggleButton) eyeL.Size, eyeL.Position, eyeL.BackgroundColor3, eyeL.BorderSizePixel = UDim2.new(0, 5, 0, 9), UDim2.new(0.26, 0, 0.32, 0), Color3.fromRGB(255, 200, 50), 0
+Instance.new("UICorner", eyeL).CornerRadius = UDim.new(1, 0)
+local eyeR = Instance.new("Frame", toggleButton) eyeR.Size, eyeR.Position, eyeR.BackgroundColor3  = UDim2.new(0, 5, 0, 9), UDim2.new(0.64, 0, 0.32, 0), Color3.fromRGB(255, 200, 50)
+Instance.new("UICorner", eyeR).CornerRadius = UDim.new(1, 0)
+local nose = Instance.new("Frame", toggleButton) nose.Size, nose.Position, nose.BackgroundColor3, nose.BorderSizePixel, nose.Rotation = UDim2.new(0, 6, 0, 6), UDim2.new(0.5, -3, 0.58, 0), Color3.fromRGB(215, 45, 75), 0, 45
+Instance.new("UICorner", nose).CornerRadius = UDim.new(0, 1)
+local wl = Instance.new("Frame", toggleButton) wl.Size, wl.Position, wl.BackgroundColor3, wl.BorderSizePixel, wl.Rotation = UDim2.new(0, 10, 0, 1), UDim2.new(0, -6, 0.58, 0), Color3.fromRGB(215, 45, 75), 0, 5
+local wr = Instance.new("Frame", toggleButton) wr.Size, wr.Position, wr.BackgroundColor3, wr.BorderSizePixel, wr.Rotation = UDim2.new(0, 10, 0, 1), UDim2.new(1, -4, 0.58, 0), Color3.fromRGB(215, 45, 75), 0, -5
+
+toggleButton.MouseButton1Click:Connect(function() frame.Visible = not frame.Visible if not frame.Visible then listFrame.Visible = false end end)
+local P = game:GetService("Players") local U = game:GetService("UserInputService") local R = game:GetService("RunService")
+local frame = _G.menuFrame local listFrame = _G.listFrameGlobal
+
+local visualUpdates = {}
+local function createBtnWithBind(text, posY, cb, varName, globalKey)
+	local b = Instance.new("TextButton", frame) b.Size, b.Position, b.BackgroundColor3, b.Text, b.TextColor3, b.Font, b.TextSize = UDim2.new(0.65, 0, 0, 24), UDim2.new(0.05, 0, 0, posY), Color3.fromRGB(25, 30, 45), text .. ": OFF", Color3.fromRGB(215, 215, 225), Enum.Font.SourceSansBold, 12
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0, 5) local btnStroke = Instance.new("UIStroke", b) btnStroke.Color, btnStroke.Thickness = Color3.fromRGB(120, 25, 45), 1.5
+	local box = Instance.new("TextBox", frame) box.Size, box.Position, box.BackgroundColor3, box.Text, box.TextColor3, box.Font, box.TextSize = UDim2.new(0.2, 0, 0, 24), UDim2.new(0.75, 0, 0, posY), Color3.fromRGB(25, 30, 45), _G[globalKey], Color3.fromRGB(255, 200, 50), Enum.Font.SourceSansBold, 12
+	Instance.new("UICorner", box).CornerRadius = UDim.new(0, 5)
+	local function updateVisual()
+		local active = (varName == "fly" and _G.fly) or (varName == "noclip" and _G.noclip) or (varName == "fling" and _G.walkfling) or (varName == "esp" and _G.esp) or (varName == "bright" and _G.bright)
+		b.BackgroundColor3 = active and Color3.fromRGB(215, 45, 75) or Color3.fromRGB(25, 30, 45) b.TextColor3 = active and Color3.new(1,1,1) or Color3.fromRGB(215, 215, 225)
+		btnStroke.Color = active and Color3.fromRGB(255, 200, 50) or Color3.fromRGB(120, 25, 45) b.Text = text .. ": " .. (active and "ON" or "OFF")
+	end
+	table.insert(visualUpdates, updateVisual) b.MouseButton1Click:Connect(cb)
+	box.FocusLost:Connect(function() local txt = box.Text:sub(1,1):upper() if txt:match("%a") then _G[globalKey] = txt box.Text = txt else box.Text = _G[globalKey] end end)
+end
+_G.updateVisuals = function() for _, uv in ipairs(visualUpdates) do uv() end end
+
+createBtnWithBind("Fly Mode", 32, toggleFly, "fly", "keyFly")
+createBtnWithBind("Noclip Wall", 59, toggleNoclip, "noclip", "keyNoclip")
+createBtnWithBind("Fling Kill", 82, toggleWalkFling, "fling", "keyFling")
+createBtnWithBind("ESP Boxes", 107, toggleEsp, "esp", "keyEsp")
+createBtnWithBind("FullBright/NoFog", 132, toggleBright, "bright", "keyBright")
+
+local function makeToolBtn(text, posY, cb, gText)
+	local b = Instance.new("TextButton", frame) b.Size, b.Position, b.BackgroundColor3, b.Text, b.TextColor3, b.Font, b.TextSize = UDim2.new(0.9, 0, 0, 22), UDim2.new(0.05, 0, 0, posY), Color3.fromRGB(25, 30, 45), text, Color3.fromRGB(215, 215, 225), Enum.Font.SourceSansBold, 12
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0, 5) local bs = Instance.new("UIStroke", b) bs.Color = Color3.fromRGB(120, 25, 45)
+	b.MouseButton1Click:Connect(function() cb() b.BackgroundColor3, b.TextColor3, bs.Color, b.Text = Color3.fromRGB(235, 170, 45), Color3.new(1,1,1), Color3.new(1,1,1), gText task.spawn(function() task.wait(1) b.BackgroundColor3, b.TextColor3, bs.Color, b.Text = Color3.fromRGB(25, 30, 45), Color3.fromRGB(215, 215, 225), Color3.fromRGB(120, 25, 45), text end) end)
+end
+makeToolBtn("Get TP Tool", 158, giveTpTool, "TP Tool: GIVEN")
+makeToolBtn("Get Lever R6", 182, giveLeverR6, "Lever R6: GIVEN")
+makeToolBtn("Get Lever R15", 206, giveLeverR15, "Lever R15: GIVEN")
+
+local bList = Instance.new("TextButton", frame) bList.Size, bList.Position, bList.BackgroundColor3, bList.Text, bList.TextColor3, bList.Font, bList.TextSize = UDim2.new(0.9, 0, 0, 22), UDim2.new(0.05, 0, 0, 230), Color3.fromRGB(25, 30, 45), "Players Teleport", Color3.fromRGB(215, 215, 225), Enum.Font.SourceSansBold, 12
+Instance.new("UICorner", bList).CornerRadius = UDim.new(0, 5)
+bList.MouseButton1Click:Connect(function() listFrame.Visible = not listFrame.Visible if listFrame.Visible then refreshPlayerList(_G.scFrame) end bList.BackgroundColor3 = listFrame.Visible and Color3.fromRGB(215, 45, 75) or Color3.fromRGB(25, 30, 45) end)
+P.PlayerAdded:Connect(function() if listFrame.Visible then refreshPlayerList(_G.scFrame) end end) P.PlayerRemoving:Connect(function() if listFrame.Visible then refreshPlayerList(_G.scFrame) end end)
+
+local function createSlider(titleText, posY, minV, maxV, startV, isWalkSpeed)
+	local sL = Instance.new("TextLabel", frame) sL.Size, sL.Position, sL.Text, sL.TextColor3, sL.Font, sL.TextSize, sL.BackgroundTransparency = UDim2.new(0.9, 0, 0, 14), UDim2.new(0.05, 0, 0, posY), titleText .. ": " .. startV, Color3.fromRGB(235, 170, 45), Enum.Font.SourceSansBold, 11, 1
+	local sF = Instance.new("Frame", frame) sF.Size, sF.Position, sF.BackgroundColor3 = UDim2.new(0.9, 0, 0, 4), UDim2.new(0.05, 0, 0, posY + 14), Color3.fromRGB(35, 40, 60)
+	local sFill = Instance.new("Frame", sF) sFill.Size, sFill.BackgroundColor3 = UDim2.new(0.3, 0, 1, 0), Color3.fromRGB(215, 45, 75)
+	local sB = Instance.new("TextButton", sF) sB.Size, sB.Position, sB.BackgroundColor3, sB.Text = UDim2.new(0, 10, 0, 10), UDim2.new(0.3,-5,-0.7, 0), Color3.fromRGB(255, 200, 50), ""
+	Instance.new("UICorner", sB).CornerRadius = UDim.new(1, 0)
+	local startP = (startV - minV) / (maxV - minV) sB.Position, sFill.Size = UDim2.new(startP, -5, -0.7, 0), UDim2.new(startP, 0, 1, 0)
+	local drag = false
+	local function update()
+		local p = math.clamp((U:GetMouseLocation().X - sF.AbsolutePosition.X) / sF.AbsoluteSize.X, 0, 1) sB.Position, sFill.Size = UDim2.new(p, -5, -0.7, 0), UDim2.new(p, 0, 1, 0)
+		local val = math.round(minV + (p * (maxV - minV))) if isWalkSpeed then _G.walkSpeed = val else _G.flySpeed = val end sL.Text = titleText .. ": " .. val
+	end
+	sB.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then drag = true end end) U.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then drag = false end end) R.Heartbeat:Connect(function() if drag then update() end end)
+end
+createSlider("Fly Speed", 257, 10, 150, 50, false) createSlider("Walk Speed", 285, 16, 200, 16, true)
+
+local bindBox = Instance.new("TextBox", frame) bindBox.Size, bindBox.Position, bindBox.BackgroundColor3, bindBox.Text, bindBox.TextColor3, bindBox.Font, bindBox.TextSize = UDim2.new(0.2, 0, 0, 18), UDim2.new(0.75, 0, 0, 337), Color3.fromRGB(25, 30, 45), _G.keyMenu, Color3.fromRGB(255, 200, 50), Enum.Font.SourceSansBold, 12
+Instance.new("UICorner", bindBox).CornerRadius = UDim.new(0, 4) Instance.new("UIStroke", bindBox).Color = Color3.fromRGB(120, 25, 45)
+local bindLabel = Instance.new("TextLabel", frame) bindLabel.Size, bindLabel.Position, bindLabel.Text, bindLabel.TextColor3, bindLabel.Font, bindLabel.TextSize, bindLabel.BackgroundTransparency = UDim2.new(0.5, 0, 0, 20), UDim2.new(0.05, 0, 0, 336), "Menu Key:", Color3.fromRGB(215, 215, 225), Enum.Font.SourceSansBold, 11, 1
+bindBox.FocusLost:Connect(function() local txt = bindBox.Text:sub(1,1):upper() if txt:match("%a") then _G.keyMenu = txt bindBox.Text = txt else bindBox.Text = _G.keyMenu end end)
+
+_G.updateVisuals()
