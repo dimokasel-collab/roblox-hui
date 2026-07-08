@@ -53,7 +53,7 @@ function toggleFly()
 			if U:IsKeyDown(Enum.KeyCode.A) then dir -= cam.CFrame.RightVector end
 			if U:IsKeyDown(Enum.KeyCode.D) then dir += cam.CFrame.RightVector end
 			if U:IsKeyDown(Enum.KeyCode.Space) then dir += Vector3.new(0,1,0) end
-			if U:IsKeyDown(Enum.KeyCode.LeftShift) then dir -= Vector3.new(0,1,0) end
+			if U:IsKeyDown(Enum.KeyCode.RightShift) then dir -= Vector3.new(0,1,0) end
 			bv.Velocity = dir.Magnitude > 0 and dir.Unit * _G.flySpeed or Vector3.zero
 			bg.CFrame = cam.CFrame
 		end
