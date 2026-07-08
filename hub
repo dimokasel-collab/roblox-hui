@@ -16,7 +16,7 @@ _G.flySpeed = 50
 _G.walkSpeed = 16
 
 _G.keyMenu = ""
-_G.keyFly = ""
+_G.keyFly = "f"
 _G.keyNoclip = ""
 _G.keyFling = ""
 _G.keyEsp = ""
