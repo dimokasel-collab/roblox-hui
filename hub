@@ -84,7 +84,7 @@ function toggleWalkFling()
 		local myHum = myChar and myChar:FindFirstChildOfClass("Humanoid")
 		if not myRoot or not myHum or myHum.Health <= 0 then return end
 		pcall(function()
-			local target, minDist = nil, 8
+			local target, minDist = nil, 17
 			for _, p in ipairs(P:GetPlayers()) do
 				if p ~= pl and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChildOfClass("Humanoid") and p.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
 					local dist = (myRoot.Position - p.Character.HumanoidRootPart.Position).Magnitude
