@@ -272,15 +272,18 @@ toggleButton.MouseLeave:Connect(function()
 	T:Create(triDown, tweenInfo, {TextSize = 64, Position = UDim2.new(0, 0, 0, 8)}):Play()
 end)
 toggleButton.MouseButton1Click:Connect(function() if _G.menuFrame then _G.menuFrame.Visible = not _G.menuFrame.Visible if not _G.menuFrame.Visible and _G.listFrameGlobal then _G.listFrameGlobal.Visible = false end end end)
-local P = game:GetService("Players") local U = game:GetService("UserInputService") local R = game:GetService("RunService")
-local frame = _G.menuFrame local listFrame = _G.listFrameGlobal
+local P = game:GetService("Players")
+local U = game:GetService("UserInputService")
+local R = game:GetService("RunService")
+local pl = P.LocalPlayer
+local frame = _G.menuFrame
 
--- Полная очистка внутренностей фрейма перед сборкой, чтобы убрать наложения
+-- Полная очистка памяти, чтобы убрать двоящийся текст
 for _, child in ipairs(frame:GetChildren()) do
 	if child:IsA("UIStroke") == false and child:IsA("UICorner") == false then child:Destroy() end
 end
 
--- Создаем неоновую верхнюю плашку
+-- Принудительное создание неоновой верхней плашки Jewsploit без багов слоёв [IY]
 local lbl = Instance.new("Frame", frame) lbl.Name = "lbl"
 lbl.Size, lbl.Position, lbl.BackgroundColor3, lbl.BorderSizePixel = UDim2.new(1, 0, 0, 34), UDim2.new(0, 0, 0, 0), Color3.fromRGB(0, 195, 255), 0
 Instance.new("UICorner", lbl).CornerRadius = UDim.new(0, 10)
@@ -292,9 +295,9 @@ title.ZIndex = 5
 
 local visualUpdates = {}
 local function createBtnWithBind(text, posY, cb, varName, globalKey)
-	local b = Instance.new("TextButton", frame) b.Size, b.Position, b.BackgroundColor3, b.Text, b.TextColor3, b.Font, b.TextSize = UDim2.new(0.65, 0, 0, 22), UDim2.new(0.05, 0, 0, posY), Color3.fromRGB(240, 245, 240), text .. ": OFF", Color3.fromRGB(0, 0, 0), Enum.Font.SourceSansBold, 11
+	local b = Instance.new("TextButton", frame) b.Size, b.Position, b.BackgroundColor3, b.Text, b.TextColor3, b.Font, b.TextSize = UDim2.new(0.65, 0, 0, 24), UDim2.new(0.05, 0, 0, posY), Color3.fromRGB(240, 245, 240), text .. ": OFF", Color3.fromRGB(0, 0, 0), Enum.Font.SourceSansBold, 12
 	b.TextScaled = false Instance.new("UICorner", b).CornerRadius = UDim.new(0, 5) local btnStroke = Instance.new("UIStroke", b) btnStroke.Color, btnStroke.Thickness = Color3.fromRGB(180, 200, 220), 1.5
-	local box = Instance.new("TextBox", frame) box.Size, box.Position, box.BackgroundColor3, box.Text, box.TextColor3, box.Font, box.TextSize = UDim2.new(0.2, 0, 0, 22), UDim2.new(0.75, 0, 0, posY), Color3.fromRGB(240, 245, 240), _G[globalKey], Color3.fromRGB(0, 0, 0), Enum.Font.SourceSansBold, 11
+	local box = Instance.new("TextBox", frame) box.Size, box.Position, box.BackgroundColor3, box.Text, box.TextColor3, box.Font, box.TextSize = UDim2.new(0.2, 0, 0, 24), UDim2.new(0.75, 0, 0, posY), Color3.fromRGB(240, 245, 240), _G[globalKey], Color3.fromRGB(0, 0, 0), Enum.Font.SourceSansBold, 12
 	Instance.new("UICorner", box).CornerRadius = UDim.new(0, 5) Instance.new("UIStroke", box).Color = Color3.fromRGB(180, 200, 220)
 	local function updateVisual()
 		local active = (varName == "fly" and _G.fly) or (varName == "noclip" and _G.noclip) or (varName == "fling" and _G.walkfling) or (varName == "esp" and _G.esp) or (varName == "bright" and _G.bright)
@@ -306,60 +309,17 @@ local function createBtnWithBind(text, posY, cb, varName, globalKey)
 end
 _G.updateVisuals = function() for _, uv in ipairs(visualUpdates) do uv() end end
 
--- Равномерные вертикальные шаги для основных функций
 createBtnWithBind("Fly", 42, toggleFly, "fly", "keyFly")
 createBtnWithBind("Noclip", 69, toggleNoclip, "noclip", "keyNoclip")
-createBtnWithBind("Fling Goy", 96, toggleWalkFling, "fling", "keyFling")
-createBtnWithBind("Show Goys", 123, toggleEsp, "esp", "keyEsp")
-createBtnWithBind("FullBright/NoFog", 150, toggleBright, "bright", "keyBright")
-
-local function makeToolBtn(text, posY, cb, gText)
-	local b = Instance.new("TextButton", frame) b.Size, b.Position, b.BackgroundColor3, b.Text, b.TextColor3, b.Font, b.TextSize = UDim2.new(0.9, 0, 0, 22), UDim2.new(0.05, 0, 0, posY), Color3.fromRGB(240, 245, 240), text, Color3.fromRGB(0, 0, 0), Enum.Font.SourceSansBold, 11
-	b.TextScaled = false Instance.new("UICorner", b).CornerRadius = UDim.new(0, 5) local bs = Instance.new("UIStroke", b) bs.Color = Color3.fromRGB(180, 200, 220)
-	b.MouseButton1Click:Connect(function() cb() b.BackgroundColor3, b.Text = Color3.fromRGB(0, 195, 255), gText task.spawn(function() task.wait(1) b.BackgroundColor3, b.Text = Color3.fromRGB(240, 245, 240), text end) end)
-end
--- ИСПРАВЛЕНО: Кнопки выдачи предметов теперь стоят на чётких раздельных позициях
-makeToolBtn("Get TP Tool", 180, giveTpTool, "TP Tool: GIVEN")
-makeToolBtn("Get Lever R6", 207, giveLeverR6, "Lever R6: GIVEN")
-makeToolBtn("Get Lever R15", 234, giveLeverR15, "Lever R15: GIVEN")
-
-local bList = Instance.new("TextButton", frame) bList.Size, bList.Position, bList.BackgroundColor3, bList.Text, bList.TextColor3, bList.Font, bList.TextSize = UDim2.new(0.9, 0, 0, 24), UDim2.new(0.05, 0, 0, 263), Color3.fromRGB(240, 245, 240), "Goys Teleport", Color3.fromRGB(0, 0, 0), Enum.Font.SourceSansBold, 11
-bList.TextScaled = false Instance.new("UICorner", bList).CornerRadius = UDim.new(0, 5) Instance.new("UIStroke", bList).Color = Color3.fromRGB(180, 200, 220)
-bList.MouseButton1Click:Connect(function() listFrame.Visible = not listFrame.Visible if listFrame.Visible then refreshPlayerList(_G.scFrame) end bList.BackgroundColor3 = listFrame.Visible and Color3.fromRGB(0, 195, 255) or Color3.fromRGB(240, 245, 240) end)
-
-local function createSlider(titleText, posY, minV, maxV, startV, isVar)
-	local sL = Instance.new("TextLabel", frame) sL.Size, sL.Position, sL.Text, sL.TextColor3, sL.Font, sL.TextSize, sL.BackgroundTransparency = UDim2.new(0.9, 0, 0, 14), UDim2.new(0.05, 0, 0, posY), titleText .. ": " .. startV, Color3.fromRGB(0, 0, 0), Enum.Font.SourceSansBold, 11, 1
-	sL.TextScaled = false local sF = Instance.new("Frame", frame) sF.Size, sF.Position, sF.BackgroundColor3 = UDim2.new(0.9, 0, 0, 4), UDim2.new(0.05, 0, 0, posY + 14), Color3.fromRGB(220, 225, 230)
-	local sFill = Instance.new("Frame", sF) sFill.Size, sFill.BackgroundColor3 = UDim2.new(0.3, 0, 1, 0), Color3.fromRGB(0, 195, 255)
-	local sB = Instance.new("TextButton", sF) sB.Size, sB.Position, sB.BackgroundColor3, sB.Text = UDim2.new(0, 10, 0, 10), UDim2.new(0.3, -5, -0.7, 0), Color3.fromRGB(0, 195, 255), ""
-	Instance.new("UICorner", sB).CornerRadius = UDim.new(1, 0) Instance.new("UIStroke", sB).Color = Color3.fromRGB(0, 0, 0)
-	local startP = (startV - minV) / (maxV - minV) sB.Position, sFill.Size = UDim2.new(startP, -5, -0.7, 0), UDim2.new(startP, 0, 1, 0)
-	local drag = false local function update()
-		local p = math.clamp((U:GetMouseLocation().X - sF.AbsolutePosition.X) / sF.AbsoluteSize.X, 0, 1) sB.Position, sFill.Size = UDim2.new(p, -5, -0.7, 0), UDim2.new(p, 0, 1, 0)
-		local val = math.round(minV + (p * (maxV - minV))) if isVar == 1 then _G.walkSpeed = val elseif isVar == 2 then _G.flySpeed = val else _G.flingRadius = val end sL.Text = titleText .. ": " .. val
-	end
-	sB.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then drag = true end end) U.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then drag = false end end) R.Heartbeat:Connect(function() if drag then update() end end)
-end
--- ИСПРАВЛЕНО: Слайдеры опущены ниже, чтобы не накладываться на текст
-createSlider("Fly Speed", 295, 10, 500, 100, 2)
-createSlider("Walk Speed", 325, 16, 200, 16, 1)
-createSlider("Fling Radius", 355, 5, 100, 8, 3)
-
--- ИСПРАВЛЕНО: Плашка Menu Key сдвинута в самый низ увеличенной панели (posY = 385)
-local bindLabel = Instance.new("TextLabel", frame) bindLabel.Size, bindLabel.Position, bindLabel.Text, bindLabel.TextColor3, bindLabel.Font, bindLabel.TextSize, bindLabel.BackgroundTransparency = UDim2.new(0.5, 0, 0, 20), UDim2.new(0.05, 0, 0, 385), "Menu Key:", Color3.fromRGB(0, 0, 0), Enum.Font.SourceSansBold, 11, 1
-bindLabel.TextScaled = false
-
-local bindBox = Instance.new("TextBox", frame) bindBox.Size, bindBox.Position, bindBox.BackgroundColor3, bindBox.Text, bindBox.TextColor3, bindBox.Font, bindBox.TextSize = UDim2.new(0.2, 0, 0, 18), UDim2.new(0.75, 0, 0, 386), Color3.fromRGB(240, 245, 240), _G.keyMenu, Color3.fromRGB(0, 0, 0), Enum.Font.SourceSansBold, 12
-Instance.new("UICorner", bindBox).CornerRadius = UDim.new(0, 4) local boxStroke = Instance.new("UIStroke", bindBox) boxStroke.Color, boxStroke.Thickness = Color3.fromRGB(180, 200, 220), 1.5
-
-bindBox.FocusLost:Connect(function() local txt = bindBox.Text:sub(1, 1):upper() if txt:match("%a") then _G.keyMenu = txt bindBox.Text = txt else bindBox.Text = _G.keyMenu end end)
-
-_G.updateVisuals()
+createBtnWithBind("Fling Goy", 94, toggleWalkFling, "fling", "keyFling")
+createBtnWithBind("Show Goys", 119, toggleEsp, "esp", "keyEsp")
+createBtnWithBind("FullBright/NoFog", 144, toggleBright, "bright", "keyBright")
+_G.createBtnWithBindGlobal = createBtnWithBind
 local P = game:GetService("Players") local U = game:GetService("UserInputService") local R = game:GetService("RunService")
 local frame = _G.menuFrame local listFrame = _G.listFrameGlobal local pl = P.LocalPlayer
 _G.lookTarget, lookConn = nil, nil
 
--- Умный генератор списка игроков с интегрированной слежкой взгляда LOOK
+-- Умный генератор списка игроков с интегрированной слежкой взгляда LOOK [IY]
 function refreshPlayerList(sc)
 	for _,v in ipairs(sc:GetChildren()) do if v:IsA("Frame") then v:Destroy() end end local count = 0 
 	for _,p in ipairs(P:GetPlayers()) do 
@@ -379,19 +339,14 @@ function refreshPlayerList(sc)
 			Instance.new("UICorner", tb).CornerRadius = UDim.new(0, 4)
 			tb.MouseButton1Click:Connect(function() local r = pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") if p.Character and p.Character:FindFirstChild("HumanoidRootPart") and r then r.CFrame = p.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 2) end end)
 			
-			-- ИСПРАВЛЕНО: Кнопка LOOK теперь жестко зафиксирована в зеленом цвете
+			-- ИСПРАВЛЕНО: Кнопка LOOK зафиксирована в зеленом цвете
 			local lBtn = Instance.new("TextButton", pf)
 			lBtn.Size, lBtn.Position, lBtn.BackgroundColor3, lBtn.Text, lBtn.TextColor3, lBtn.Font, lBtn.TextSize = UDim2.new(0.24, 0, 0.8, 0), UDim2.new(0.73, 0, 0.1, 0), Color3.fromRGB(30, 45, 30), "LOOK", Color3.fromRGB(225, 255, 225), Enum.Font.SourceSansBold, 10 
 			Instance.new("UICorner", lBtn).CornerRadius = UDim.new(0, 4) local lStroke = Instance.new("UIStroke", lBtn) lStroke.Color = Color3.fromRGB(50, 100, 30)
 			
 			lBtn.MouseButton1Click:Connect(function()
-				if _G.lookTarget == p then 
-					_G.lookTarget = nil 
-					if lookConn then lookConn:Disconnect() lookConn = nil end 
-				else 
-					_G.lookTarget = p 
-					if lookConn then lookConn:Disconnect() end 
-					lookConn = R.Heartbeat:Connect(function()
+				if _G.lookTarget == p then _G.lookTarget = nil if lookConn then lookConn:Disconnect() lookConn = nil end
+				else _G.lookTarget = p if lookConn then lookConn:Disconnect() end lookConn = R.Heartbeat:Connect(function()
 						local myRoot = pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") local tChar = _G.lookTarget and _G.lookTarget.Character local tRoot = tChar and tChar:FindFirstChild("HumanoidRootPart")
 						if myRoot and tRoot then myRoot.CFrame = CFrame.lookAt(myRoot.Position, Vector3.new(tRoot.Position.X, myRoot.Position.Y, tRoot.Position.Z)) else if lookConn then lookConn:Disconnect() lookConn = nil end end 
 					end)
@@ -409,7 +364,7 @@ local function makeToolBtn(text, posY, cb, gText)
 	b.MouseButton1Click:Connect(function() cb() b.BackgroundColor3, b.Text = Color3.fromRGB(0, 195, 255), gText task.spawn(function() task.wait(1) b.BackgroundColor3, b.Text = Color3.fromRGB(240, 245, 250), text end) end)
 end
 makeToolBtn("Get TP Tool", 170, giveTpTool, "TP Tool: GIVEN")
-makeToolBtn("Get Lever R6", 189, giveLeverR6, "Lever R6: GIVEN")
+makeToolBtn("Get Lever R6", 194, giveLeverR6, "Lever R6: GIVEN")
 makeToolBtn("Get Lever R15", 218, giveLeverR15, "Lever R15: GIVEN")
 
 local bList = Instance.new("TextButton", frame) bList.Size, bList.Position, bList.BackgroundColor3, bList.Text, bList.TextColor3, bList.Font, bList.TextSize = UDim2.new(0.9, 0, 0, 22), UDim2.new(0.05, 0, 0, 242), Color3.fromRGB(240, 245, 240), "Goys Teleport", Color3.fromRGB(0, 0, 0), Enum.Font.SourceSansBold, 12
