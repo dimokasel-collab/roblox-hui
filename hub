@@ -16,12 +16,12 @@ _G.flySpeed = 100
 _G.walkSpeed = 16
 _G.flingRadius = 8
 
-_G.keyMenu = "Q"
-_G.keyFly = "F"
-_G.keyNoclip = "N"
-_G.keyFling = "G"
-_G.keyEsp = "V"
-_G.keyBright = "B"
+_G.keyMenu = ""
+_G.keyFly = ""
+_G.keyNoclip = ""
+_G.keyFling = ""
+_G.keyEsp = ""
+_G.keyBright = ""
 
 local bv, bg, ncConn, wfConn
 
