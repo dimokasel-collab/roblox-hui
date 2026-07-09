@@ -245,7 +245,7 @@ Instance.new("UIStroke", frame).Color = Color3.fromRGB(0, 195, 255)
 local listFrame = Instance.new("Frame", frame.Parent) listFrame.Size, listFrame.Position, listFrame.BackgroundColor3, listFrame.Active, listFrame.Draggable, listFrame.Visible = UDim2.new(0, 170, 0, 220), UDim2.new(0.2, 0, 0.3, 0), Color3.fromRGB(255, 255, 255), true, true, false
 Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0, 10) _G.listFrameGlobal = listFrame
 Instance.new("UIStroke", listFrame).Color = Color3.fromRGB(0, 195, 255)
-local listLbl = Instance.new("TextLabel", listFrame) listLbl.Size, listLbl.Text, listLbl.TextColor3, listLbl.Font, listLbl.TextSize, listLbl.BackgroundColor3 = UDim2.new(1, 0, 0, 25), "临Server Goys临", Color3.fromRGB(0, 0, 0), Enum.Font.SourceSansBold, 12, Color3.fromRGB(0, 195, 255)
+local listLbl = Instance.new("TextLabel", listFrame) listLbl.Size, listLbl.Text, listLbl.TextColor3, listLbl.Font, listLbl.TextSize, listLbl.BackgroundColor3 = UDim2.new(1, 0, 0, 25), "✡Server Goys✡", Color3.fromRGB(0, 0, 0), Enum.Font.SourceSansBold, 12, Color3.fromRGB(0, 195, 255)
 Instance.new("UICorner", listLbl).CornerRadius = UDim.new(0, 10)
 _G.scFrame = Instance.new("ScrollingFrame", listFrame) _G.scFrame.Size, _G.scFrame.Position, _G.scFrame.BackgroundTransparency, _G.scFrame.BorderSizePixel, _G.scFrame.ScrollBarThickness = UDim2.new(1, 0, 0.85, 0), UDim2.new(0, 0, 0.13, 0), 1, 0, 4
 
@@ -326,7 +326,7 @@ Instance.new("UICorner", lbl).CornerRadius = UDim.new(0, 10)
 
 local title = Instance.new("TextLabel", frame) title.Name = "title"
 title.Size, title.Position, title.BackgroundTransparency = UDim2.new(1, 0, 0, 34), UDim2.new(0, 0, 0, 0), 1
-title.Text, title.TextColor3, title.Font, title.TextSize = ":flag_il:Jewsploit:flag_il:", Color3.fromRGB(0, 0, 0), Enum.Font.SourceSansBold, 12
+title.Text, title.TextColor3, title.Font, title.TextSize = "✡Jewsploit✡", Color3.fromRGB(0, 0, 0), Enum.Font.SourceSansBold, 12
 title.ZIndex = 5
 
 local visualUpdates = {}
