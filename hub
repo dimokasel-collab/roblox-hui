@@ -326,7 +326,7 @@ Instance.new("UICorner", lbl).CornerRadius = UDim.new(0, 10)
 
 local title = Instance.new("TextLabel", frame) title.Name = "title"
 title.Size, title.Position, title.BackgroundTransparency = UDim2.new(1, 0, 0, 34), UDim2.new(0, 0, 0, 0), 1
-title.Text, title.TextColor3, title.Font, title.TextSize = "临Jewsploit临", Color3.fromRGB(0, 0, 0), Enum.Font.SourceSansBold, 12
+title.Text, title.TextColor3, title.Font, title.TextSize = ":flag_il:Jewsploit:flag_il:", Color3.fromRGB(0, 0, 0), Enum.Font.SourceSansBold, 12
 title.ZIndex = 5
 
 local visualUpdates = {}
